@@ -1,0 +1,111 @@
+### Health Check
+GET http://localhost:8080/api/products/health
+
+###
+
+### ===== MONITORING ENDPOINTS =====
+
+### Get HikariCP Connection Pool Metrics
+GET http://localhost:8080/api/monitoring/hikari
+
+###
+
+### Get Detailed HikariCP Metrics
+GET http://localhost:8080/api/monitoring/hikari/details
+
+###
+
+### Get Quick Connection Pool Status
+GET http://localhost:8080/api/monitoring/hikari/status
+
+###
+
+### Monitoring Health Check
+GET http://localhost:8080/api/monitoring/health
+
+###
+
+### Real-Time Metrics Stream (SSE)
+### Open this in browser or use EventSource API
+GET http://localhost:8080/api/monitoring/hikari/stream
+
+###
+
+### Real-Time Dashboard (Open in Browser) 🔥
+### Visual dashboard with live charts
+### http://localhost:8080/dashboard/hikari
+
+###
+
+### ===== PRODUCT ENDPOINTS =====
+
+###
+
+### Get All Products
+GET http://localhost:8080/api/products
+
+###
+
+### Get Product by ID (V1 - Blocking)
+### Calls real Postman Echo API: https://postman-echo.com/delay/2
+### Default delay: 2 seconds - configurable in application.properties
+### ⚠️  BLOCKS DB connection during entire request (including external API delay)
+GET http://localhost:8080/api/products/1
+
+###
+
+### Get Product by ID (V2 - Non-Blocking) 🚀
+### Calls real Postman Echo API: https://postman-echo.com/delay/2
+### NON-BLOCKING version that releases DB connection before calling external API
+### ✅ DB connection only held during query (~50ms)
+### ✅ External API delay happens WITHOUT holding DB connection
+### ✅ Prevents connection pool exhaustion under load
+GET http://localhost:8080/api/products/v2/1
+
+###
+
+### Create Product
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "name": "Gaming Mouse",
+  "description": "RGB gaming mouse with 12 buttons",
+  "price": 79.99,
+  "stockQuantity": 100
+}
+
+###
+
+### Create Another Product
+POST http://localhost:8080/api/products
+Content-Type: application/json
+
+{
+  "name": "Mechanical Keyboard",
+  "description": "Cherry MX Blue switches, RGB backlight",
+  "price": 149.99,
+  "stockQuantity": 75
+}
+
+###
+
+### Process Product (Main Feature)
+### This endpoint:
+### 1. Queries the database for the product
+### 2. Calls external dummy API
+### 3. Updates product based on API response
+POST http://localhost:8080/api/products/1/process
+
+###
+
+### Process Another Product
+POST http://localhost:8080/api/products/2/process
+
+###
+
+### Delete Product
+DELETE http://localhost:8080/api/products/1
+
+###
+
