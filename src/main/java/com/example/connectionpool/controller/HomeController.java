@@ -149,12 +149,23 @@ public class HomeController {
         quickStart.put("6", "Test async processing: GET http://localhost:8080/api/products/v2/1");
         quickStart.put("7", "Test customer API: GET http://localhost:8080/api/customers");
         
+        // Tomcat Monitoring Endpoints
+        Map<String, Object> tomcatEndpoints = new LinkedHashMap<>();
+        Map<String, String> tomcatOperations = new LinkedHashMap<>();
+        tomcatOperations.put("GET /api/tomcat/metrics", "Get Tomcat thread pool metrics");
+        tomcatOperations.put("GET /api/tomcat/details", "Get detailed Tomcat information");
+        tomcatOperations.put("GET /api/tomcat/status", "Get Tomcat status");
+        tomcatOperations.put("GET /api/tomcat/stream", "Real-time Tomcat metrics stream (SSE)");
+        tomcatOperations.put("GET /api/tomcat/health", "Health check");
+        tomcatEndpoints.put("operations", tomcatOperations);
+        
         // Assemble response
         Map<String, Object> endpoints = new LinkedHashMap<>();
         endpoints.put("products", productEndpoints);
         endpoints.put("customers", customerEndpoints);
         endpoints.put("monitoring", monitoringEndpoints);
         endpoints.put("threadpool", threadPoolEndpoints);
+        endpoints.put("tomcat", tomcatEndpoints);
         endpoints.put("dashboard", dashboardEndpoints);
         response.put("endpoints", endpoints);
         response.put("applicationInfo", appInfo);
@@ -329,6 +340,25 @@ public class HomeController {
         html.append("                </div>\n");
         html.append("            </div>\n");
         
+        // Tomcat Monitoring Endpoints
+        html.append("            <div class=\"section\">\n");
+        html.append("                <h2 class=\"section-title\">🚀 Tomcat Thread Pool Monitoring API</h2>\n");
+        html.append("                <div class=\"endpoint-category\">\n");
+        html.append("                    <div class=\"category-header\">\n");
+        html.append("                        <div class=\"category-title\">Tomcat Pool<span class=\"badge\">Real-time</span></div>\n");
+        html.append("                        <div class=\"category-path\">/api/tomcat</div>\n");
+        html.append("                    </div>\n");
+        html.append("                    <div class=\"category-desc\">Real-time Tomcat HTTP thread pool monitoring and metrics</div>\n");
+        
+        addEndpoint(html, "GET", "/api/tomcat/metrics", "Get Tomcat metrics", "Returns current Tomcat thread pool statistics");
+        addEndpoint(html, "GET", "/api/tomcat/details", "Get detailed Tomcat info", "Returns comprehensive Tomcat configuration and status");
+        addEndpoint(html, "GET", "/api/tomcat/status", "Get Tomcat status", "Returns simple Tomcat status information");
+        addEndpoint(html, "GET", "/api/tomcat/stream", "Real-time Tomcat stream", "Server-Sent Events stream for live monitoring");
+        addEndpoint(html, "GET", "/api/tomcat/health", "Health check", "Returns API status");
+        
+        html.append("                </div>\n");
+        html.append("            </div>\n");
+        
         // Dashboard
         html.append("            <div class=\"section\">\n");
         html.append("                <h2 class=\"section-title\">🎨 Dashboards</h2>\n");
@@ -341,6 +371,7 @@ public class HomeController {
         
         addEndpoint(html, "GET", "/dashboard/hikari", "HikariCP Dashboard", "Real-time web dashboard for connection pool monitoring");
         addEndpoint(html, "GET", "/dashboard/threadpool", "Thread Pool Dashboard", "Real-time web dashboard for thread pool monitoring");
+        addEndpoint(html, "GET", "/dashboard/tomcat", "Tomcat Dashboard", "Real-time web dashboard for Tomcat thread pool monitoring");
         
         html.append("                </div>\n");
         html.append("            </div>\n");

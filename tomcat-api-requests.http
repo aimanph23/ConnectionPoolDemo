@@ -1,0 +1,65 @@
+### Tomcat Monitoring API Requests
+### Test file for Tomcat Thread Pool Monitoring endpoints
+
+### 1. Get Tomcat Metrics
+GET http://localhost:8080/api/tomcat/metrics
+Accept: application/json
+
+###
+
+### 2. Get Detailed Tomcat Information
+GET http://localhost:8080/api/tomcat/details
+Accept: application/json
+
+###
+
+### 3. Get Tomcat Status
+GET http://localhost:8080/api/tomcat/status
+Accept: application/json
+
+###
+
+### 4. Real-time Tomcat Metrics Stream (SSE)
+# Note: This is a Server-Sent Events endpoint that streams continuously
+# Open this in a browser or use a tool that supports SSE
+GET http://localhost:8080/api/tomcat/stream
+Accept: text/event-stream
+
+###
+
+### 5. Health Check
+GET http://localhost:8080/api/tomcat/health
+Accept: application/json
+
+###
+
+### 6. Access Tomcat Dashboard (Browser)
+# Open in browser: http://localhost:8080/dashboard/tomcat
+GET http://localhost:8080/dashboard/tomcat
+
+###
+
+### 7. Generate Load - Sync Endpoint (to see Tomcat threads in action)
+# Run multiple of these simultaneously to see thread pool activity
+GET http://localhost:8080/api/products/1
+
+###
+
+### 8. Generate Load - Async Endpoint (compare thread usage)
+# Run multiple of these simultaneously and compare with sync
+GET http://localhost:8080/api/products/v2/1
+
+###
+
+### 9. Check Actuator Metrics (if enabled)
+GET http://localhost:8080/actuator/metrics
+Accept: application/json
+
+###
+
+### 10. Check Actuator Health
+GET http://localhost:8080/actuator/health
+Accept: application/json
+
+###
+
