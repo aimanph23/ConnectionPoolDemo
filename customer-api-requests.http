@@ -1,0 +1,58 @@
+### Customer API 101 Collection Integration Tests
+### Test the PostmanEchoService integration with API 101 endpoints
+
+### Health Check
+GET http://localhost:8080/api/customers/health
+
+### Get All Customers (Synchronous)
+GET http://localhost:8080/api/customers
+
+### Get All Customers (Asynchronous)
+GET http://localhost:8080/api/customers/async
+
+### Get Customer by ID (Synchronous)
+GET http://localhost:8080/api/customers/1
+
+### Get Customer by ID (Asynchronous)
+GET http://localhost:8080/api/customers/async/1
+
+### Create New Customer (Synchronous)
+POST http://localhost:8080/api/customers
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john.doe@example.com",
+  "phone": "123-456-7890",
+  "address": "123 Main Street, Anytown, USA"
+}
+
+### Create New Customer (Asynchronous)
+POST http://localhost:8080/api/customers/async
+Content-Type: application/json
+
+{
+  "name": "Jane Smith",
+  "email": "jane.smith@example.com",
+  "phone": "987-654-3210",
+  "address": "456 Oak Avenue, Somewhere, USA"
+}
+
+### Update Customer (Synchronous)
+PUT http://localhost:8080/api/customers/1
+Content-Type: application/json
+
+{
+  "name": "John Doe Updated",
+  "email": "john.updated@example.com",
+  "phone": "123-456-7890",
+  "address": "789 Pine Street, Updated City, USA"
+}
+
+### Delete Customer (Synchronous)
+DELETE http://localhost:8080/api/customers/1
+
+### Test with different customer IDs
+GET http://localhost:8080/api/customers/2
+GET http://localhost:8080/api/customers/3
+GET http://localhost:8080/api/customers/999

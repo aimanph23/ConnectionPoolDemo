@@ -7,15 +7,15 @@ This guide explains the non-blocking `/api/products/v2/{id}` endpoint and how it
 ### V1 - Blocking Endpoint (Original)
 
 ```
-GET /api/products/1
+GET /transfer/rba (Express Send)
         │
         ▼
    ┌────────────────────────────────┐
    │  Acquire DB Connection         │ 🔒 Connection Held
-   │  Query Product                 │ 🔒 Connection Held
-   │  ⏱️  Sleep 2000ms (Mock API)   │ 🔒 Connection Held ❌
-   │  Return Response               │ 🔒 Connection Held
+   │  Call API (e.g. Jarvis, A+)    │ 🔒 Connection Held
+   │ ⏱️ 2000ms (slow/timeout)       │ 🔒 Connection Held 
    │  Release DB Connection         │ ✅ Connection Released
+   |  Return Response               │ 
    └────────────────────────────────┘
    
    Total Connection Hold Time: ~2050ms

@@ -1,0 +1,14 @@
+### Home Endpoint Test
+### Test the comprehensive /home endpoint that summarizes all application endpoints
+
+### Get Application Overview
+GET http://localhost:8080/home
+
+### Test with different content types
+GET http://localhost:8080/home
+Accept: application/json
+
+### Test the endpoint after starting the application
+# 1. Start the application: mvn spring-boot:run
+# 2. Wait for startup to complete
+# 3. Run this request to see all available endpoints

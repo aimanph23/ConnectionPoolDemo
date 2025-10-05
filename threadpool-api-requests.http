@@ -1,0 +1,128 @@
+### Thread Pool Monitoring API Test Requests
+### Base URL: http://localhost:8080
+
+###############################################################################
+# 1. Health Check
+###############################################################################
+
+### Health Check - Verify thread pool monitoring API is running
+GET http://localhost:8080/api/threadpool/health
+
+###############################################################################
+# 2. Get Thread Pool Metrics
+###############################################################################
+
+### Get current thread pool metrics
+GET http://localhost:8080/api/threadpool/metrics
+
+###############################################################################
+# 3. Get Detailed Thread Pool Information
+###############################################################################
+
+### Get comprehensive thread pool details
+GET http://localhost:8080/api/threadpool/details
+
+###############################################################################
+# 4. Get Simple Thread Pool Status
+###############################################################################
+
+### Get quick status check
+GET http://localhost:8080/api/threadpool/status
+
+###############################################################################
+# 5. Real-time Stream (SSE)
+###############################################################################
+
+### Real-time metrics stream
+### Note: This will stream continuously. Stop with Ctrl+C
+### Open this URL in browser to see live updates
+GET http://localhost:8080/api/threadpool/stream
+
+###############################################################################
+# 6. Dashboard
+###############################################################################
+
+### Open Thread Pool Dashboard
+### Copy this URL to browser: http://localhost:8080/dashboard/threadpool
+
+###############################################################################
+# Test Scenarios
+###############################################################################
+
+### Scenario 1: Monitor under load
+### Step 1: Get baseline metrics
+GET http://localhost:8080/api/threadpool/metrics
+
+### Step 2: Trigger async operations (run multiple times)
+GET http://localhost:8080/api/products/v2/1
+GET http://localhost:8080/api/products/v2/2
+GET http://localhost:8080/api/products/v2/3
+GET http://localhost:8080/api/products/v2/4
+GET http://localhost:8080/api/products/v2/5
+
+### Step 3: Check metrics again to see active threads
+GET http://localhost:8080/api/threadpool/metrics
+
+###
+
+### Scenario 2: Compare with HikariCP metrics
+### Get thread pool metrics
+GET http://localhost:8080/api/threadpool/metrics
+
+### Get HikariCP metrics
+GET http://localhost:8080/api/monitoring/hikari
+
+###
+
+### Scenario 3: Monitor queue behavior
+### Step 1: Get initial state
+GET http://localhost:8080/api/threadpool/status
+
+### Step 2: Flood with async requests (run all at once)
+GET http://localhost:8080/api/customers/async
+GET http://localhost:8080/api/customers/async/1
+GET http://localhost:8080/api/customers/async/2
+GET http://localhost:8080/api/products/v2/1
+GET http://localhost:8080/api/products/v2/2
+GET http://localhost:8080/api/products/v2/3
+GET http://localhost:8080/api/products/v2/4
+GET http://localhost:8080/api/products/v2/5
+GET http://localhost:8080/api/products/v2/6
+GET http://localhost:8080/api/products/v2/7
+
+### Step 3: Check queue size immediately
+GET http://localhost:8080/api/threadpool/status
+
+###
+
+### Scenario 4: View all details
+GET http://localhost:8080/api/threadpool/details
+
+###############################################################################
+# Notes
+###############################################################################
+
+# Configuration:
+# - Core Pool Size: 5
+# - Max Pool Size: 10
+# - Queue Capacity: 25
+#
+# Metrics to watch:
+# - activeCount: Threads currently executing
+# - poolSize: Current thread count
+# - queueSize: Tasks waiting
+# - utilizationPercent: Thread usage %
+# - queueUtilizationPercent: Queue usage %
+#
+# Dashboard Features:
+# - Real-time charts
+# - Automatic warnings at 80% utilization
+# - Live SSE streaming
+# - Visual progress bars
+#
+# Access Points:
+# - Dashboard: http://localhost:8080/dashboard/threadpool
+# - Metrics API: http://localhost:8080/api/threadpool/metrics
+# - Stream: http://localhost:8080/api/threadpool/stream
+# - Home: http://localhost:8080/home
+

@@ -16,7 +16,7 @@
     <artifactId>connection-pool-demo</artifactId>
     <version>1.0.0</version>
     <name>ConnectionPoolDemo</name>
-    <description>Spring Boot application with YugabyteDB connection pool</description>
+    <description>Spring Boot application with H2 in-memory database connection pool</description>
 
     <properties>
         <java.version>17</java.version>
@@ -44,11 +44,11 @@
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
-        <!-- YugabyteDB JDBC Smart Driver -->
+        <!-- H2 Database (in-memory) -->
         <dependency>
-            <groupId>com.yugabyte</groupId>
-            <artifactId>jdbc-yugabytedb</artifactId>
-            <version>42.3.5-yb-5</version>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- HikariCP Connection Pool (included in spring-boot-starter-data-jpa) -->

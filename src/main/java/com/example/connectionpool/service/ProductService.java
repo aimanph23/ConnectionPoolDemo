@@ -7,10 +7,8 @@ import com.example.connectionpool.entity.Product;
 import com.example.connectionpool.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,10 +19,7 @@ import java.util.stream.Collectors;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final RestTemplate restTemplate;
-
-    @Value("${external.api.url}")
-    private String externalApiUrl;
+    private final PostmanEchoService postmanEchoService;
 
     /**
      * Main endpoint logic: Query database, call external API, and update based on result
@@ -40,7 +35,7 @@ public class ProductService {
         log.info("Found product: {}", product.getName());
 
         // Step 2: Call external dummy API
-        ExternalApiResponse apiResponse = callExternalApi();
+        ExternalApiResponse apiResponse = postmanEchoService.callExternalApi();
         log.info("External API response received: {}", apiResponse.getTitle());
 
         // Step 3: Update product based on API result
@@ -62,22 +57,6 @@ public class ProductService {
         return mapToResponse(updatedProduct, "Product processed and updated successfully");
     }
 
-    /**
-     * Call external dummy API
-     */
-    private ExternalApiResponse callExternalApi() {
-        try {
-            log.info("Calling external API: {}", externalApiUrl);
-            ExternalApiResponse response = restTemplate.getForObject(externalApiUrl, ExternalApiResponse.class);
-            return response != null ? response : new ExternalApiResponse();
-        } catch (Exception e) {
-            log.error("Error calling external API: {}", e.getMessage());
-            // Return default response on error
-            ExternalApiResponse defaultResponse = new ExternalApiResponse();
-            defaultResponse.setTitle("Default Response - API call failed");
-            return defaultResponse;
-        }
-    }
 
     /**
      * Create a new product
