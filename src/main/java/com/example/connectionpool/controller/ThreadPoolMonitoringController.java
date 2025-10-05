@@ -25,10 +25,20 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class ThreadPoolMonitoringController {
 
-    private final ThreadPoolTaskExecutor taskExecutor;
+    private final Executor taskExecutor;
+    private final boolean isVirtualThreadExecutor;
     
     public ThreadPoolMonitoringController(@Qualifier("taskExecutor") Executor taskExecutor) {
-        this.taskExecutor = (ThreadPoolTaskExecutor) taskExecutor;
+        this.taskExecutor = taskExecutor;
+        // Check if we're using Java 21 Virtual Threads
+        this.isVirtualThreadExecutor = taskExecutor.getClass().getName().contains("VirtualThread") 
+            || taskExecutor.getClass().getName().contains("ThreadPerTask");
+        
+        if (isVirtualThreadExecutor) {
+            log.info("✨ TaskExecutor is using Java 21 Virtual Threads! Unlimited concurrency enabled.");
+        } else {
+            log.info("📊 TaskExecutor is using Platform Threads (ThreadPoolTaskExecutor)");
+        }
     }
     private final CopyOnWriteArrayList<SseEmitter> emitters = new CopyOnWriteArrayList<>();
     private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
@@ -43,38 +53,65 @@ public class ThreadPoolMonitoringController {
         log.info("Fetching thread pool metrics");
         
         try {
-            ThreadPoolExecutor executor = taskExecutor.getThreadPoolExecutor();
-            
             Map<String, Object> metrics = new HashMap<>();
             metrics.put("poolName", "TaskExecutor");
-            metrics.put("corePoolSize", executor.getCorePoolSize());
-            metrics.put("maximumPoolSize", executor.getMaximumPoolSize());
-            metrics.put("activeCount", executor.getActiveCount());
-            metrics.put("poolSize", executor.getPoolSize());
-            metrics.put("largestPoolSize", executor.getLargestPoolSize());
-            metrics.put("taskCount", executor.getTaskCount());
-            metrics.put("completedTaskCount", executor.getCompletedTaskCount());
-            metrics.put("queueSize", executor.getQueue().size());
-            metrics.put("queueRemainingCapacity", executor.getQueue().remainingCapacity());
-            metrics.put("queueCapacity", executor.getQueue().size() + executor.getQueue().remainingCapacity());
-            metrics.put("isShutdown", executor.isShutdown());
-            metrics.put("isTerminated", executor.isTerminated());
-            metrics.put("isTerminating", executor.isTerminating());
             metrics.put("timestamp", System.currentTimeMillis());
             
-            // Calculate utilization percentages
-            int utilizationPercent = executor.getMaximumPoolSize() > 0 
-                ? (int) ((executor.getActiveCount() * 100.0) / executor.getMaximumPoolSize())
-                : 0;
-            metrics.put("utilizationPercent", utilizationPercent);
-            
-            int queueUtilizationPercent = (executor.getQueue().size() + executor.getQueue().remainingCapacity()) > 0
-                ? (int) ((executor.getQueue().size() * 100.0) / (executor.getQueue().size() + executor.getQueue().remainingCapacity()))
-                : 0;
-            metrics.put("queueUtilizationPercent", queueUtilizationPercent);
-            
-            log.info("Thread pool metrics: active={}, pool={}, queue={}", 
-                executor.getActiveCount(), executor.getPoolSize(), executor.getQueue().size());
+            if (isVirtualThreadExecutor) {
+                // Java 21 Virtual Threads - Unlimited!
+                metrics.put("type", "VirtualThreadPerTaskExecutor");
+                metrics.put("corePoolSize", "unlimited");
+                metrics.put("maximumPoolSize", "unlimited");
+                metrics.put("activeCount", "N/A");
+                metrics.put("poolSize", "unlimited");
+                metrics.put("largestPoolSize", "N/A");
+                metrics.put("taskCount", "N/A");
+                metrics.put("completedTaskCount", "N/A");
+                metrics.put("queueSize", 0);
+                metrics.put("queueRemainingCapacity", "unlimited");
+                metrics.put("queueCapacity", "unlimited");
+                metrics.put("isShutdown", false);
+                metrics.put("isTerminated", false);
+                metrics.put("isTerminating", false);
+                metrics.put("utilizationPercent", 0);
+                metrics.put("queueUtilizationPercent", 0);
+                metrics.put("message", "✨ Using Java 21 Virtual Threads - Unlimited concurrency!");
+                
+                log.info("✨ Virtual Thread Executor - No limits!");
+            } else if (taskExecutor instanceof ThreadPoolTaskExecutor) {
+                // Platform Threads
+                ThreadPoolTaskExecutor tpte = (ThreadPoolTaskExecutor) taskExecutor;
+                ThreadPoolExecutor executor = tpte.getThreadPoolExecutor();
+                
+                metrics.put("type", "ThreadPoolTaskExecutor");
+                metrics.put("corePoolSize", executor.getCorePoolSize());
+                metrics.put("maximumPoolSize", executor.getMaximumPoolSize());
+                metrics.put("activeCount", executor.getActiveCount());
+                metrics.put("poolSize", executor.getPoolSize());
+                metrics.put("largestPoolSize", executor.getLargestPoolSize());
+                metrics.put("taskCount", executor.getTaskCount());
+                metrics.put("completedTaskCount", executor.getCompletedTaskCount());
+                metrics.put("queueSize", executor.getQueue().size());
+                metrics.put("queueRemainingCapacity", executor.getQueue().remainingCapacity());
+                metrics.put("queueCapacity", executor.getQueue().size() + executor.getQueue().remainingCapacity());
+                metrics.put("isShutdown", executor.isShutdown());
+                metrics.put("isTerminated", executor.isTerminated());
+                metrics.put("isTerminating", executor.isTerminating());
+                
+                // Calculate utilization percentages
+                int utilizationPercent = executor.getMaximumPoolSize() > 0 
+                    ? (int) ((executor.getActiveCount() * 100.0) / executor.getMaximumPoolSize())
+                    : 0;
+                metrics.put("utilizationPercent", utilizationPercent);
+                
+                int queueUtilizationPercent = (executor.getQueue().size() + executor.getQueue().remainingCapacity()) > 0
+                    ? (int) ((executor.getQueue().size() * 100.0) / (executor.getQueue().size() + executor.getQueue().remainingCapacity()))
+                    : 0;
+                metrics.put("queueUtilizationPercent", queueUtilizationPercent);
+                
+                log.info("Thread pool metrics: active={}, pool={}, queue={}", 
+                    executor.getActiveCount(), executor.getPoolSize(), executor.getQueue().size());
+            }
             
             return ResponseEntity.ok(metrics);
             
@@ -96,8 +133,26 @@ public class ThreadPoolMonitoringController {
     public ResponseEntity<Map<String, Object>> getThreadPoolDetails() {
         log.info("Fetching detailed thread pool information");
         
+        // For virtual threads, just return basic info
+        if (isVirtualThreadExecutor) {
+            Map<String, Object> details = new HashMap<>();
+            details.put("type", "VirtualThreadPerTaskExecutor");
+            details.put("message", "✨ Java 21 Virtual Threads - Unlimited concurrency!");
+            details.put("description", "Virtual threads are lightweight threads managed by the JVM");
+            details.put("features", java.util.Arrays.asList(
+                "Unlimited concurrent tasks",
+                "Minimal memory footprint (~1KB per thread)",
+                "No thread pool limits",
+                "No queue overflow",
+                "Perfect for I/O-bound operations"
+            ));
+            return ResponseEntity.ok(details);
+        }
+        
+        // For platform threads
         try {
-            ThreadPoolExecutor executor = taskExecutor.getThreadPoolExecutor();
+            ThreadPoolTaskExecutor tpte = (ThreadPoolTaskExecutor) taskExecutor;
+            ThreadPoolExecutor executor = tpte.getThreadPoolExecutor();
             
             Map<String, Object> details = new HashMap<>();
             
@@ -156,11 +211,25 @@ public class ThreadPoolMonitoringController {
     public ResponseEntity<Map<String, Object>> getThreadPoolStatus() {
         log.info("Fetching thread pool status");
         
-        try {
-            ThreadPoolExecutor executor = taskExecutor.getThreadPoolExecutor();
-            
-            Map<String, Object> status = new HashMap<>();
+        Map<String, Object> status = new HashMap<>();
+        
+        if (isVirtualThreadExecutor) {
             status.put("status", "RUNNING");
+            status.put("type", "VirtualThreads");
+            status.put("active", "N/A");
+            status.put("poolSize", "unlimited");
+            status.put("queueSize", 0);
+            status.put("healthy", true);
+            status.put("message", "✨ Virtual Threads - Unlimited capacity!");
+            return ResponseEntity.ok(status);
+        }
+        
+        try {
+            ThreadPoolTaskExecutor tpte = (ThreadPoolTaskExecutor) taskExecutor;
+            ThreadPoolExecutor executor = tpte.getThreadPoolExecutor();
+            
+            status.put("status", "RUNNING");
+            status.put("type", "PlatformThreads");
             status.put("active", executor.getActiveCount());
             status.put("poolSize", executor.getPoolSize());
             status.put("queueSize", executor.getQueue().size());
@@ -234,31 +303,51 @@ public class ThreadPoolMonitoringController {
             }
             
             try {
-                ThreadPoolExecutor executor = taskExecutor.getThreadPoolExecutor();
-                
                 Map<String, Object> metrics = new HashMap<>();
                 metrics.put("poolName", "TaskExecutor");
-                metrics.put("corePoolSize", executor.getCorePoolSize());
-                metrics.put("maximumPoolSize", executor.getMaximumPoolSize());
-                metrics.put("activeCount", executor.getActiveCount());
-                metrics.put("poolSize", executor.getPoolSize());
-                metrics.put("largestPoolSize", executor.getLargestPoolSize());
-                metrics.put("taskCount", executor.getTaskCount());
-                metrics.put("completedTaskCount", executor.getCompletedTaskCount());
-                metrics.put("queueSize", executor.getQueue().size());
-                metrics.put("queueRemainingCapacity", executor.getQueue().remainingCapacity());
                 metrics.put("timestamp", System.currentTimeMillis());
                 
-                // Calculate utilization
-                int utilizationPercent = executor.getMaximumPoolSize() > 0 
-                    ? (int) ((executor.getActiveCount() * 100.0) / executor.getMaximumPoolSize())
-                    : 0;
-                metrics.put("utilizationPercent", utilizationPercent);
-                
-                int queueUtilizationPercent = (executor.getQueue().size() + executor.getQueue().remainingCapacity()) > 0
-                    ? (int) ((executor.getQueue().size() * 100.0) / (executor.getQueue().size() + executor.getQueue().remainingCapacity()))
-                    : 0;
-                metrics.put("queueUtilizationPercent", queueUtilizationPercent);
+                if (isVirtualThreadExecutor) {
+                    // Virtual threads - unlimited!
+                    metrics.put("type", "VirtualThreads");
+                    metrics.put("corePoolSize", "unlimited");
+                    metrics.put("maximumPoolSize", "unlimited");
+                    metrics.put("activeCount", "N/A");
+                    metrics.put("poolSize", "unlimited");
+                    metrics.put("largestPoolSize", "N/A");
+                    metrics.put("taskCount", "N/A");
+                    metrics.put("completedTaskCount", "N/A");
+                    metrics.put("queueSize", 0);
+                    metrics.put("queueRemainingCapacity", "unlimited");
+                    metrics.put("utilizationPercent", 0);
+                    metrics.put("queueUtilizationPercent", 0);
+                } else if (taskExecutor instanceof ThreadPoolTaskExecutor) {
+                    // Platform threads
+                    ThreadPoolTaskExecutor tpte = (ThreadPoolTaskExecutor) taskExecutor;
+                    ThreadPoolExecutor executor = tpte.getThreadPoolExecutor();
+                    
+                    metrics.put("type", "PlatformThreads");
+                    metrics.put("corePoolSize", executor.getCorePoolSize());
+                    metrics.put("maximumPoolSize", executor.getMaximumPoolSize());
+                    metrics.put("activeCount", executor.getActiveCount());
+                    metrics.put("poolSize", executor.getPoolSize());
+                    metrics.put("largestPoolSize", executor.getLargestPoolSize());
+                    metrics.put("taskCount", executor.getTaskCount());
+                    metrics.put("completedTaskCount", executor.getCompletedTaskCount());
+                    metrics.put("queueSize", executor.getQueue().size());
+                    metrics.put("queueRemainingCapacity", executor.getQueue().remainingCapacity());
+                    
+                    // Calculate utilization
+                    int utilizationPercent = executor.getMaximumPoolSize() > 0 
+                        ? (int) ((executor.getActiveCount() * 100.0) / executor.getMaximumPoolSize())
+                        : 0;
+                    metrics.put("utilizationPercent", utilizationPercent);
+                    
+                    int queueUtilizationPercent = (executor.getQueue().size() + executor.getQueue().remainingCapacity()) > 0
+                        ? (int) ((executor.getQueue().size() * 100.0) / (executor.getQueue().size() + executor.getQueue().remainingCapacity()))
+                        : 0;
+                    metrics.put("queueUtilizationPercent", queueUtilizationPercent);
+                }
                 
                 // Send to all connected clients
                 for (SseEmitter emitter : emitters) {
