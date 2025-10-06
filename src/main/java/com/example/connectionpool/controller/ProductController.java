@@ -8,6 +8,7 @@ import com.example.connectionpool.service.MockApiService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +25,9 @@ public class ProductController {
     private final ProductService productService;
     private final ProductServiceAsync productServiceAsync;
     private final MockApiService mockApiService;
+    
+    @Value("${product.api.sleep.ms:0}")
+    private long productApiSleepMs;
 
     /**
      * Main endpoint: Process a product - queries DB, calls external API, and updates based on result
@@ -87,14 +91,30 @@ public class ProductController {
             String mockApiResponse = mockApiService.callMockApi(id);
             log.info("Mock API response: {}", mockApiResponse);
             
-            // Optionally add mock response to the product response message
-            if (response.getMessage() == null || response.getMessage().isEmpty()) {
-                response.setMessage(mockApiResponse);
-            } else {
-                response.setMessage(response.getMessage() + " | " + mockApiResponse);
+            // Configurable sleep after API call
+            if (productApiSleepMs > 0) {
+                log.info("Sleeping for {} ms after API call", productApiSleepMs);
+                Thread.sleep(productApiSleepMs);
             }
             
-            return ResponseEntity.ok(response);
+            // Optionally add mock response to the product response message
+            //if (response.getMessage() == null || response.getMessage().isEmpty()) {
+            //    response.setMessage(mockApiResponse);
+            //} else {
+            //    response.setMessage(response.getMessage() + " | " + mockApiResponse);
+            //}
+
+            ProductResponse response2 = productService.getProductById(id+1);
+
+            return ResponseEntity.ok(response2);
+        } catch (InterruptedException e) {
+            log.error("Thread interrupted during sleep: {}", e.getMessage());
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                ProductResponse.builder()
+                    .message("Error: Thread interrupted")
+                    .build()
+            );
         } catch (RuntimeException e) {
             log.error("Error getting product: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
@@ -136,6 +156,7 @@ public class ProductController {
         return productServiceAsync.getProductWithMockApiAsync(id)
                 .thenApply(response -> {
                     log.info("[V2] Non-blocking request completed for product ID: {}", id);
+
                     return ResponseEntity.ok(response);
                 })
                 .exceptionally(e -> {

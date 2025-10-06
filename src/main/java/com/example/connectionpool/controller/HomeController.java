@@ -138,7 +138,9 @@ public class HomeController {
             "Real-time Metrics Dashboard",
             "Postman API 101 Collection Integration"
         ));
-        
+
+
+
         // Quick Start Guide
         Map<String, Object> quickStart = new LinkedHashMap<>();
         quickStart.put("1", "Start the application: mvn spring-boot:run");
@@ -241,7 +243,23 @@ public class HomeController {
         html.append("        </div>\n");
         
         html.append("        <div class=\"content\">\n");
-        
+        html.append("            </div>\n");
+
+        // Dashboard
+        html.append("            <div class=\"section\">\n");
+        html.append("                <h2 class=\"section-title\">🎨 Dashboards</h2>\n");
+        html.append("                <div class=\"endpoint-category\">\n");
+        html.append("                    <div class=\"category-header\">\n");
+        html.append("                        <div class=\"category-title\">Web Dashboards<span class=\"badge\">Visual</span></div>\n");
+        html.append("                        <div class=\"category-path\">/dashboard</div>\n");
+        html.append("                    </div>\n");
+        html.append("                    <div class=\"category-desc\">Web-based monitoring dashboards</div>\n");
+
+        addEndpoint(html, "GET", "/dashboard/hikari", "HikariCP Dashboard", "Real-time web dashboard for connection pool monitoring");
+        addEndpoint(html, "GET", "/dashboard/threadpool", "Thread Pool Dashboard", "Real-time web dashboard for thread pool monitoring");
+        addEndpoint(html, "GET", "/dashboard/tomcat", "Tomcat Dashboard", "Real-time web dashboard for Tomcat thread pool monitoring");
+
+        html.append("                </div>\n");
         // Quick Start
         html.append("            <div class=\"section\">\n");
         html.append("                <div class=\"quick-start\">\n");
@@ -357,23 +375,7 @@ public class HomeController {
         addEndpoint(html, "GET", "/api/tomcat/health", "Health check", "Returns API status");
         
         html.append("                </div>\n");
-        html.append("            </div>\n");
-        
-        // Dashboard
-        html.append("            <div class=\"section\">\n");
-        html.append("                <h2 class=\"section-title\">🎨 Dashboards</h2>\n");
-        html.append("                <div class=\"endpoint-category\">\n");
-        html.append("                    <div class=\"category-header\">\n");
-        html.append("                        <div class=\"category-title\">Web Dashboards<span class=\"badge\">Visual</span></div>\n");
-        html.append("                        <div class=\"category-path\">/dashboard</div>\n");
-        html.append("                    </div>\n");
-        html.append("                    <div class=\"category-desc\">Web-based monitoring dashboards</div>\n");
-        
-        addEndpoint(html, "GET", "/dashboard/hikari", "HikariCP Dashboard", "Real-time web dashboard for connection pool monitoring");
-        addEndpoint(html, "GET", "/dashboard/threadpool", "Thread Pool Dashboard", "Real-time web dashboard for thread pool monitoring");
-        addEndpoint(html, "GET", "/dashboard/tomcat", "Tomcat Dashboard", "Real-time web dashboard for Tomcat thread pool monitoring");
-        
-        html.append("                </div>\n");
+
         html.append("            </div>\n");
         
         // Application Info

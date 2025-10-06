@@ -5,6 +5,7 @@ import com.example.connectionpool.entity.Product;
 import com.example.connectionpool.repository.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +19,16 @@ public class ProductServiceAsync {
 
     private final ProductRepository productRepository;
     private final MockApiService mockApiService;
+    
+    @Value("${product.api.v2.sleep.ms:0}")
+    private long productApiV2SleepMs;
 
     /**
      * Non-blocking version: Fetches product from DB and releases connection immediately
      * This prevents holding a DB connection during the mock API call
      */
     @Async("taskExecutor")
-    @Transactional(readOnly = true)
+    //@Transactional(readOnly = true)
     public CompletableFuture<Product> getProductByIdAsync(Long id) {
         log.info("[ASYNC] Fetching product {} from database - Thread: {}", 
             id, Thread.currentThread().getName());
@@ -81,6 +85,23 @@ public class ProductServiceAsync {
             
             log.info("[ASYNC] Combining results for product {} - Total time: {}ms", id, totalTime);
             
+            // Configurable sleep before returning response (runs in taskExecutor thread)
+            if (productApiV2SleepMs > 0) {
+                try {
+                    log.info("[ASYNC-V2] Sleeping for {} ms in taskExecutor thread: {}", 
+                        productApiV2SleepMs, Thread.currentThread().getName());
+                    Thread.sleep(productApiV2SleepMs);
+                    log.info("[ASYNC-V2] Sleep completed in thread: {}", Thread.currentThread().getName());
+                } catch (InterruptedException e) {
+                    log.error("[ASYNC-V2] Thread interrupted during sleep: {}", e.getMessage());
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Thread interrupted during async sleep", e);
+                }
+            }
+            
+            long finalEndTime = System.currentTimeMillis();
+            long finalTotalTime = finalEndTime - startTime;
+            
             return ProductResponse.builder()
                     .id(product.getId())
                     .name(product.getName())
@@ -89,7 +110,7 @@ public class ProductServiceAsync {
                     .stockQuantity(product.getStockQuantity())
                     .externalApiResponse(product.getExternalApiResponse())
                     .lastUpdated(product.getLastUpdated())
-                    .message(String.format("%s | Total processing time: %dms", mockApiResponse, totalTime))
+                    .message(String.format("%s | Total processing time: %dms", mockApiResponse, finalTotalTime))
                     .build();
         });
     }
