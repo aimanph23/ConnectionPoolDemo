@@ -125,21 +125,30 @@ public class ProductController {
         }
     }
 
+    /**
+     * Get random product (Version 1 - Synchronous)
+     * Randomly selects a product ID between 1 and 10000
+     * 
+     * Example: GET http://localhost:8080/api/products/version1
+     */
     @GetMapping("/version1")
     public ResponseEntity<ProductResponse> processRandomProduct() {
+        // Generate random product ID between 1 and 10000
+        long randomId = (long) (Math.random() * 10000) + 1;
+        log.info("Received request to get random product, selected ID: {}", randomId);
 
         try {
-            ProductResponse response = productService.getProductById(1L);
-
-            // Call mock API with configurable delay
-            //String mockApiResponse = mockApiService.callMockApi(id);
-            //log.info("Mock API response: {}", mockApiResponse);
+            ProductResponse response = productService.getProductById(randomId);
 
             // Configurable sleep after API call
             if (productApiSleepMs > 0) {
                 log.info("Sleeping for {} ms after API call", productApiSleepMs);
                 Thread.sleep(productApiSleepMs);
             }
+
+            // Update product's last_updated timestamp
+            log.info("Updating last_updated timestamp for product ID: {}", randomId);
+            productService.updateProductTimestamp(randomId);
 
             return ResponseEntity.ok(response);
         } catch (InterruptedException e) {
@@ -151,7 +160,7 @@ public class ProductController {
                             .build()
             );
         } catch (RuntimeException e) {
-            log.error("Error getting product: {}", e.getMessage());
+            log.error("Error getting product with ID {}: {}", randomId, e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
                     ProductResponse.builder()
                             .message("Error: " + e.getMessage())

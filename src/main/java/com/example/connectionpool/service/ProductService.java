@@ -128,5 +128,25 @@ public class ProductService {
                 .message(message)
                 .build();
     }
+
+    /**
+     * Update product's last_updated timestamp to current time
+     * This is useful for tracking when a product was last accessed/modified
+     */
+    @Transactional
+    public void updateProductTimestamp(Long productId) {
+        log.info("Updating timestamp for product ID: {}", productId);
+        
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+        
+        // JPA will automatically update the last_updated field to current timestamp
+        // when we save the entity (if using @PreUpdate or similar)
+        // For explicit update, we can use a query or just save
+        product.setLastUpdated(java.time.LocalDateTime.now());
+        productRepository.save(product);
+        
+        log.info("Updated timestamp for product: {}", product.getName());
+    }
 }
 
