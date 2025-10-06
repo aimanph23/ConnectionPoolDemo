@@ -258,6 +258,7 @@ public class HomeController {
         addEndpoint(html, "GET", "/dashboard/hikari", "HikariCP Dashboard", "Real-time web dashboard for connection pool monitoring");
         addEndpoint(html, "GET", "/dashboard/threadpool", "Thread Pool Dashboard", "Real-time web dashboard for thread pool monitoring");
         addEndpoint(html, "GET", "/dashboard/tomcat", "Tomcat Dashboard", "Real-time web dashboard for Tomcat thread pool monitoring");
+        addEndpoint(html, "GET", "/dashboard/jvm", "JVM Dashboard", "Real-time CPU & Memory monitoring dashboard");
 
         html.append("                </div>\n");
         // Quick Start

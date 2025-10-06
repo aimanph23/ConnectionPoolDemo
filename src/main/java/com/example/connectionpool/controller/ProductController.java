@@ -88,8 +88,8 @@ public class ProductController {
             ProductResponse response = productService.getProductById(id);
             
             // Call mock API with configurable delay
-            String mockApiResponse = mockApiService.callMockApi(id);
-            log.info("Mock API response: {}", mockApiResponse);
+            //String mockApiResponse = mockApiService.callMockApi(id);
+            //log.info("Mock API response: {}", mockApiResponse);
             
             // Configurable sleep after API call
             if (productApiSleepMs > 0) {
@@ -121,6 +121,41 @@ public class ProductController {
                 ProductResponse.builder()
                     .message("Error: " + e.getMessage())
                     .build()
+            );
+        }
+    }
+
+    @GetMapping("/version1")
+    public ResponseEntity<ProductResponse> processRandomProduct() {
+
+        try {
+            ProductResponse response = productService.getProductById(1L);
+
+            // Call mock API with configurable delay
+            //String mockApiResponse = mockApiService.callMockApi(id);
+            //log.info("Mock API response: {}", mockApiResponse);
+
+            // Configurable sleep after API call
+            if (productApiSleepMs > 0) {
+                log.info("Sleeping for {} ms after API call", productApiSleepMs);
+                Thread.sleep(productApiSleepMs);
+            }
+
+            return ResponseEntity.ok(response);
+        } catch (InterruptedException e) {
+            log.error("Thread interrupted during sleep: {}", e.getMessage());
+            Thread.currentThread().interrupt();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                    ProductResponse.builder()
+                            .message("Error: Thread interrupted")
+                            .build()
+            );
+        } catch (RuntimeException e) {
+            log.error("Error getting product: {}", e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    ProductResponse.builder()
+                            .message("Error: " + e.getMessage())
+                            .build()
             );
         }
     }
